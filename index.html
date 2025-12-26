@@ -367,6 +367,31 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2ecc71;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+        
+        .notification.error {
+            background-color: #e74c3c;
+        }
+        
+        .notification.warning {
+            background-color: #f39c12;
+        }
     </style>
 </head>
 <body>
@@ -564,41 +589,34 @@
                     <p>Ejemplo del formato que debe pegarse:</p>
                     <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; overflow-x: auto; max-height: 300px; overflow-y: auto;">
                         <pre style="margin: 0; white-space: pre-wrap;">
-25 diciembre 2025
+24 noviembre 2024
 
-0142245355
+0140302968
 
-Susana Chapa Guerrero
+Alfonso Dario Trejo Sandoval
 
-5 abril 1957
+22 abril 1989
 
-8120702993
+8131072106
 
 
-chicanahd20@gmail.com
+trejosandovalalfonsodario8@gmail.com
 
-Industrias del oriente 3622
-Entre calle nueva y palma
-Jardines de san Rafael
-Guadalupe
+Villa Latina 240
+Entre Villa Milán y Villa Concordia
+Villas de Alcala
+Cienega de flores
 Nuevo León
-CP 67110
+CP 65550
 
-https://maps.app.goo.gl/CkjqTJqemy36fxG8A?g_st=ac
+https://maps.app.goo.gl/i9fySn4UWATTeuhVA
 
-*Plan Requerido*
-250 megas TV $749
-* Precio promoción al pagar puntual $699
-
-*Adicionales*
-* Servicio de tv adicional  $99/mes
-* $60 de descuento mensual por 5 meses
-
-Mensual $798
-Mensual con descuento aplicado $738/mes por 5 meses
-
-*Paga al instalar $738*</pre>
+Plan contratado
+80 megas TV 575</pre>
                     </div>
+                    <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                        <strong>Nota:</strong> Ahora acepta nombres de 3 a 6 palabras y precios con o sin símbolo $
+                    </p>
                 </div>
             </div>
         </div>
@@ -784,67 +802,86 @@ Mensual con descuento aplicado $738/mes por 5 meses
         function extractDataFromLines(lines) {
             let extractedData = {};
             
-            // Patrones para extraer datos
+            // Contadores para saber qué hemos encontrado
+            let dateCount = 0;
+            let phoneCount = 0;
+            let accountFound = false;
+            
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 
-                // Extraer fecha instalada (primera fecha encontrada)
-                if (!extractedData.fechaInstalada && /^\d{1,2}\s+[a-zA-Z]+\s+\d{4}$/.test(line)) {
-                    extractedData.fechaInstalada = line;
+                // Saltar líneas vacías
+                if (line === '') continue;
+                
+                // Extraer fecha (formato: día mes año)
+                // Patrón mejorado: acepta "24 noviembre 2024" o "5 abril 1957"
+                const dateMatch = line.match(/^(\d{1,2})\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+(\d{4})$/);
+                if (dateMatch) {
+                    if (dateCount === 0) {
+                        extractedData.fechaInstalada = line;
+                        dateCount++;
+                    } else if (dateCount === 1) {
+                        extractedData.fechaNacimiento = line;
+                        dateCount++;
+                    }
                     continue;
                 }
                 
-                // Extraer número de cuenta (10 dígitos)
-                if (!extractedData.numeroCuenta && /^\d{10}$/.test(line)) {
+                // Extraer número de cuenta (10 dígitos exactos)
+                if (!accountFound && /^\d{10}$/.test(line)) {
                     extractedData.numeroCuenta = line;
+                    accountFound = true;
                     continue;
                 }
                 
-                // Extraer nombre (tres palabras con mayúscula inicial)
-                if (!extractedData.nombreCliente && /^[A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(line)) {
+                // Extraer nombre (3 a 6 palabras con mayúscula inicial)
+                // Patrón mejorado: acepta nombres con acentos y ñ
+                const namePattern = /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){2,5}$/;
+                if (!extractedData.nombreCliente && namePattern.test(line)) {
                     extractedData.nombreCliente = line;
                     continue;
                 }
                 
-                // Extraer fecha nacimiento (segunda fecha encontrada)
-                if (extractedData.fechaInstalada && !extractedData.fechaNacimiento && /^\d{1,2}\s+[a-zA-Z]+\s+\d{4}$/.test(line)) {
-                    extractedData.fechaNacimiento = line;
+                // Extraer teléfono (10 dígitos)
+                // Solo si no es número de cuenta (ya procesado)
+                if (/^\d{10}$/.test(line) && line !== extractedData.numeroCuenta) {
+                    if (phoneCount === 0) {
+                        extractedData.telefonoTitular = line;
+                        phoneCount++;
+                    } else if (phoneCount === 1) {
+                        extractedData.telefonoAdicional = line;
+                        phoneCount++;
+                    }
                     continue;
                 }
                 
-                // Extraer teléfono titular (primer teléfono de 10 dígitos)
-                if (!extractedData.telefonoTitular && /^\d{10}$/.test(line)) {
-                    extractedData.telefonoTitular = line;
-                    continue;
-                }
-                
-                // Extraer teléfono adicional (segundo teléfono de 10 dígitos)
-                if (extractedData.telefonoTitular && !extractedData.telefonoAdicional && /^\d{10}$/.test(line)) {
-                    extractedData.telefonoAdicional = line;
-                    continue;
-                }
-                
-                // Extraer correo
+                // Extraer correo (contiene @ y .)
                 if (!extractedData.correoCliente && line.includes('@') && line.includes('.')) {
                     extractedData.correoCliente = line;
                     continue;
                 }
                 
-                // Extraer dirección - asumimos que después del correo viene la dirección
+                // Extraer enlace de Google Maps
+                if (!extractedData.linkMaps && (line.includes('http') && (line.includes('maps') || line.includes('goo.gl')))) {
+                    extractedData.linkMaps = line;
+                    continue;
+                }
+                
+                // Detectar inicio de dirección (después del correo, antes del enlace de maps)
                 if (extractedData.correoCliente && !extractedData.calleNumero && 
-                    line.length > 0 && !line.includes('http') && !line.includes('maps') && 
-                    !line.includes('*Plan') && !line.includes('*Adicionales') && 
-                    !line.includes('Mensual $') && !line.includes('Paga al instalar')) {
+                    !extractedData.linkMaps && line.length > 0 && 
+                    !line.includes('http') && !line.includes('@')) {
                     
                     // Intentar extraer dirección completa
                     let addressLines = [];
                     let j = i;
                     
+                    // Recopilar líneas hasta encontrar un enlace o información de plan
                     while (j < lines.length && 
                            !lines[j].includes('http') && 
                            !lines[j].includes('maps') && 
-                           !lines[j].includes('*Plan') && 
-                           !lines[j].includes('*Adicionales') &&
+                           !lines[j].includes('goo.gl') &&
+                           !lines[j].toLowerCase().includes('plan') &&
                            lines[j].length > 0) {
                         
                         addressLines.push(lines[j]);
@@ -855,22 +892,28 @@ Mensual con descuento aplicado $738/mes por 5 meses
                     if (addressLines.length >= 1) {
                         extractedData.calleNumero = addressLines[0];
                         
-                        if (addressLines.length >= 2 && addressLines[1].toLowerCase().includes('entre')) {
-                            extractedData.entreCalles = addressLines[1];
-                            
-                            // El resto de la dirección
-                            if (addressLines.length >= 6) {
-                                extractedData.colonia = addressLines[2] || '';
-                                extractedData.municipio = addressLines[3] || '';
-                                extractedData.estado = addressLines[4] || '';
-                                extractedData.codigoPostal = addressLines[5] || '';
+                        // Buscar línea que contenga "entre"
+                        let entreCallesIndex = -1;
+                        for (let k = 1; k < addressLines.length; k++) {
+                            if (addressLines[k].toLowerCase().includes('entre')) {
+                                entreCallesIndex = k;
+                                extractedData.entreCalles = addressLines[k];
+                                break;
                             }
-                        } else if (addressLines.length >= 5) {
-                            // Sin línea "entre calles"
-                            extractedData.colonia = addressLines[1] || '';
-                            extractedData.municipio = addressLines[2] || '';
-                            extractedData.estado = addressLines[3] || '';
-                            extractedData.codigoPostal = addressLines[4] || '';
+                        }
+                        
+                        // Determinar índices para colonia, municipio, etc.
+                        let coloniaIndex = entreCallesIndex !== -1 ? entreCallesIndex + 1 : 1;
+                        
+                        if (addressLines.length >= coloniaIndex + 4) {
+                            extractedData.colonia = addressLines[coloniaIndex] || '';
+                            extractedData.municipio = addressLines[coloniaIndex + 1] || '';
+                            extractedData.estado = addressLines[coloniaIndex + 2] || '';
+                            extractedData.codigoPostal = addressLines[coloniaIndex + 3] || '';
+                        } else if (addressLines.length >= coloniaIndex + 3) {
+                            extractedData.colonia = addressLines[coloniaIndex] || '';
+                            extractedData.municipio = addressLines[coloniaIndex + 1] || '';
+                            extractedData.estado = addressLines[coloniaIndex + 2] || '';
                         }
                     }
                     
@@ -878,19 +921,16 @@ Mensual con descuento aplicado $738/mes por 5 meses
                     continue;
                 }
                 
-                // Extraer enlace de Google Maps
-                if (!extractedData.linkMaps && (line.includes('http') && (line.includes('maps') || line.includes('goo.gl')))) {
-                    extractedData.linkMaps = line;
-                    continue;
-                }
-                
                 // Extraer información adicional (plan, precios, etc.)
-                if (line.includes('*Plan Requerido*') || line.includes('*Adicionales*') || 
-                    line.includes('Mensual $') || line.includes('Paga al instalar')) {
-                    
+                // Buscar cualquier indicio de información de plan
+                const planKeywords = ['plan', 'megas', 'contratado', 'mensual', 'precio', 'adicionales', 'paga', 'instalar', '$'];
+                const hasPlanKeyword = planKeywords.some(keyword => line.toLowerCase().includes(keyword));
+                
+                if (hasPlanKeyword && !extractedData.informacionAdicional) {
                     let additionalInfo = [];
                     let k = i;
                     
+                    // Tomar desde esta línea hasta el final
                     while (k < lines.length) {
                         additionalInfo.push(lines[k]);
                         k++;
@@ -972,17 +1012,54 @@ Mensual con descuento aplicado $738/mes por 5 meses
             
             const lines = infoText.split('\n');
             
-            for (let line of lines) {
-                if (line.includes('megas') || (line.includes('Plan') && !line.includes('*Plan Requerido*'))) {
-                    planInfo.plan = line.replace('*Plan Requerido*', '').trim();
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                
+                // Detectar plan (contiene "megas" o "plan")
+                if ((line.toLowerCase().includes('megas') || line.toLowerCase().includes('plan')) && planInfo.plan === 'No especificado') {
+                    planInfo.plan = line.trim();
+                    
+                    // Intentar extraer precio de la misma línea (con o sin $)
+                    const precioMatch = line.match(/(\$?\s*\d+)/);
+                    if (precioMatch && !planInfo.mensualidad.includes('$')) {
+                        planInfo.mensualidad = precioMatch[1].trim();
+                        if (!planInfo.mensualidad.includes('$')) {
+                            planInfo.mensualidad = '$' + planInfo.mensualidad;
+                        }
+                    }
                 }
                 
-                if (line.includes('Mensual $')) {
-                    planInfo.mensualidad = line.replace('Mensual', '').trim();
+                // Detectar mensualidad
+                if (line.toLowerCase().includes('mensual') && planInfo.mensualidad === 'No especificado') {
+                    const precioMatch = line.match(/(\$?\s*\d+)/);
+                    if (precioMatch) {
+                        planInfo.mensualidad = precioMatch[1].trim();
+                        if (!planInfo.mensualidad.includes('$')) {
+                            planInfo.mensualidad = '$' + planInfo.mensualidad;
+                        }
+                    }
                 }
                 
-                if (line.includes('Paga al instalar')) {
-                    planInfo.pagoInstalacion = line.replace('*Paga al instalar', '').replace('*', '').trim();
+                // Detectar pago al instalar
+                if ((line.toLowerCase().includes('paga') || line.toLowerCase().includes('instalar')) && planInfo.pagoInstalacion === 'No especificado') {
+                    const precioMatch = line.match(/(\$?\s*\d+)/);
+                    if (precioMatch) {
+                        planInfo.pagoInstalacion = precioMatch[1].trim();
+                        if (!planInfo.pagoInstalacion.includes('$')) {
+                            planInfo.pagoInstalacion = '$' + planInfo.pagoInstalacion;
+                        }
+                    }
+                }
+                
+                // Si no hemos encontrado precio, buscar cualquier número en líneas subsiguientes
+                if (planInfo.plan !== 'No especificado' && planInfo.mensualidad === 'No especificado') {
+                    const precioMatch = line.match(/(\$?\s*\d+)/);
+                    if (precioMatch && i > 0) { // No usar la primera línea si ya es el plan
+                        planInfo.mensualidad = precioMatch[1].trim();
+                        if (!planInfo.mensualidad.includes('$')) {
+                            planInfo.mensualidad = '$' + planInfo.mensualidad;
+                        }
+                    }
                 }
             }
             
@@ -1211,40 +1288,30 @@ Mensual con descuento aplicado $738/mes por 5 meses
         
         // Función para cargar datos de ejemplo
         function loadExampleData() {
-            const exampleData = `25 diciembre 2025
+            const exampleData = `24 noviembre 2024
 
-0142245355
+0140302968
 
-Susana Chapa Guerrero
+Alfonso Dario Trejo Sandoval
 
-5 abril 1957
+22 abril 1989
 
-8120702993
+8131072106
 
 
-chicanahd20@gmail.com
+trejosandovalalfonsodario8@gmail.com
 
-Industrias del oriente 3622
-Entre calle nueva y palma
-Jardines de san Rafael
-Guadalupe
+Villa Latina 240
+Entre Villa Milán y Villa Concordia
+Villas de Alcala
+Cienega de flores
 Nuevo León
-CP 67110
+CP 65550
 
-https://maps.app.goo.gl/CkjqTJqemy36fxG8A?g_st=ac
+https://maps.app.goo.gl/i9fySn4UWATTeuhVA
 
-*Plan Requerido*
-250 megas TV $749
-* Precio promoción al pagar puntual $699
-
-*Adicionales*
-* Servicio de tv adicional  $99/mes
-* $60 de descuento mensual por 5 meses
-
-Mensual $798
-Mensual con descuento aplicado $738/mes por 5 meses
-
-*Paga al instalar $738*`;
+Plan contratado
+80 megas TV 575`;
             
             rawDataTextarea.value = exampleData;
             showSuccess('Datos de ejemplo cargados. Haz clic en "Procesar Datos" para extraer la información.');
@@ -1256,6 +1323,9 @@ Mensual con descuento aplicado $738/mes por 5 meses
             dataError.style.display = 'block';
             rawDataTextarea.classList.add('field-error');
             
+            // Mostrar notificación
+            showNotification(message, 'error');
+            
             // Quitar el error después de 5 segundos
             setTimeout(hideError, 5000);
         }
@@ -1266,30 +1336,19 @@ Mensual con descuento aplicado $738/mes por 5 meses
         }
         
         function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+        
+        function showNotification(message, type = 'success') {
             // Crear un elemento de notificación temporal
             const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background-color: #2ecc71;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 6px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 1000;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-            `;
-            
-            notification.innerHTML = `<i class="fas fa-check-circle" style="margin-right: 10px;"></i> ${message}`;
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}" style="margin-right: 10px;"></i> ${message}`;
             document.body.appendChild(notification);
             
             // Remover después de 3 segundos
             setTimeout(() => {
                 notification.style.opacity = '0';
-                notification.style.transition = 'opacity 0.5s';
                 setTimeout(() => document.body.removeChild(notification), 500);
             }, 3000);
         }
