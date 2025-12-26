@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Clientes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0;
+        }
+        
+        .left-panel {
+            flex: 1.2;
+            min-width: 350px;
+            padding: 25px;
+            border-right: 1px solid #eee;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+            padding: 25px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            color: #2575fc;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-title i {
+            margin-right: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.95rem;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: #6a11cb;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.1);
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .paste-area {
+            background-color: #f9f9f9;
+            border: 2px dashed #bbb;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .paste-area:hover {
+            border-color: #6a11cb;
+            background-color: #f0f5ff;
+        }
+        
+        .paste-area i {
+            font-size: 2rem;
+            color: #6a11cb;
+            margin-bottom: 10px;
+        }
+        
+        .paste-area h3 {
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-width: 140px;
+        }
+        
+        .btn-primary {
+            background-color: #6a11cb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a0db5;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #2575fc;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1c68e8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+        }
+        
+        .clients-table th {
+            background-color: #f1f5fd;
+            color: #2575fc;
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .clients-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+        }
+        
+        .clients-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .client-count {
+            background-color: #f1f5fd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #2575fc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #777;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
+        .field-error {
+            border-color: #e74c3c !important;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .instructions {
+            background-color: #f9f9f9;
+            border-left: 4px solid #6a11cb;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .instructions h4 {
+            color: #6a11cb;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.85rem;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-button {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            color: #6a11cb;
+            border-bottom: 3px solid #6a11cb;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            color: #444;
+            margin: 20px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .fields-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users"></i> Sistema de Gestión de Clientes</h1>
+            <p class="subtitle">Pega la información del cliente en el formato especificado y el sistema automáticamente la organizará y almacenará para su exportación a Excel.</p>
+        </header>
+        
+        <div class="content">
+            <div class="left-panel">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="paste-tab">Pegar Datos</button>
+                    <button class="tab-button" data-tab="fields-tab">Campos del Cliente</button>
+                </div>
+                
+                <div id="paste-tab" class="tab-content active">
+                    <div class="panel-title">
+                        <i class="fas fa-paste"></i> Ingreso de Datos
+                    </div>
+                    
+                    <div class="instructions">
+                        <h4>Instrucciones:</h4>
+                        <ul>
+                            <li>Copia y pega toda la información del cliente en el área de texto inferior</li>
+                            <li>El formato debe seguir el ejemplo mostrado a la derecha</li>
+                            <li>Haz clic en "Procesar Datos" para extraer la información automáticamente</li>
+                            <li>Verifica los datos y haz clic en "Agregar Cliente" para guardar</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="paste-area" id="pasteTrigger">
+                        <i class="fas fa-paste"></i>
+                        <h3>Haz clic para pegar o arrastra información</h3>
+                        <p>También puedes pegar directamente en el área de texto de abajo</p>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="rawData">Información del cliente (formato texto):</label>
+                        <textarea id="rawData" placeholder="Pega aquí la información del cliente en el formato especificado..."></textarea>
+                        <div class="error-message" id="dataError">Formato incorrecto. Por favor, pega la información en el formato especificado.</div>
+                    </div>
+                    
+                    <div class="buttons">
+                        <button class="btn btn-primary" id="processBtn">
+                            <i class="fas fa-cogs"></i> Procesar Datos
+                        </button>
+                        <button class="btn btn-secondary" id="clearBtn">
+                            <i class="fas fa-broom"></i> Limpiar Campos
+                        </button>
+                        <button class="btn btn-success" id="loadExampleBtn">
+                            <i class="fas fa-file-alt"></i> Cargar Ejemplo
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="fields-tab" class="tab-content">
+                    <div class="panel-title">
+                        <i class="fas fa-edit"></i> Campos del Cliente
+                    </div>
+                    
+                    <div class="buttons">
+                        <button class="btn btn-success" id="addClientBtn">
+                            <i class="fas fa-user-plus"></i> Agregar Cliente
+                        </button>
+                    </div>
+                    
+                    <div class="fields-grid">
+                        <div class="input-group">
+                            <label for="fechaInstalada">Fecha instalada:</label>
+                            <input type="text" id="fechaInstalada">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="numeroCuenta">Número de cuenta:</label>
+                            <input type="text" id="numeroCuenta">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="nombreCliente">Nombre Cliente:</label>
+                            <input type="text" id="nombreCliente">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="fechaNacimiento">Fecha nacimiento cliente:</label>
+                            <input type="text" id="fechaNacimiento">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="telefonoTitular">Teléfono titular cliente:</label>
+                            <input type="text" id="telefonoTitular">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="telefonoAdicional">Teléfono adicional cliente:</label>
+                            <input type="text" id="telefonoAdicional">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="correoCliente">Correo electrónico cliente:</label>
+                            <input type="email" id="correoCliente">
+                        </div>
+                    </div>
+                    
+                    <div class="section-title">Dirección</div>
+                    
+                    <div class="fields-grid">
+                        <div class="input-group">
+                            <label for="calleNumero">Calle y número:</label>
+                            <input type="text" id="calleNumero">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="entreCalles">Entre calles:</label>
+                            <input type="text" id="entreCalles">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="colonia">Colonia:</label>
+                            <input type="text" id="colonia">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="municipio">Municipio:</label>
+                            <input type="text" id="municipio">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="estado">Estado:</label>
+                            <input type="text" id="estado">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="codigoPostal">Código postal:</label>
+                            <input type="text" id="codigoPostal">
+                        </div>
+                    </div>
+                    
+                    <div class="section-title">Información Adicional</div>
+                    
+                    <div class="fields-grid">
+                        <div class="input-group">
+                            <label for="linkMaps">Link a Google Maps:</label>
+                            <input type="url" id="linkMaps">
+                        </div>
+                        
+                        <div class="input-group" style="grid-column: span 2;">
+                            <label for="informacionAdicional">Información adicional (Plan, precios, etc.):</label>
+                            <textarea id="informacionAdicional" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="panel-title">
+                    <i class="fas fa-list"></i> Clientes Registrados
+                </div>
+                
+                <div class="client-count">
+                    <span>Total de clientes: <span id="clientCount">0</span></span>
+                    <button class="btn btn-secondary" id="exportBtn" style="padding: 8px 15px; min-width: auto;">
+                        <i class="fas fa-file-excel"></i> Exportar a Excel
+                    </button>
+                </div>
+                
+                <div id="clientsContainer">
+                    <div class="empty-state" id="emptyState">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No hay clientes registrados</h3>
+                        <p>Agrega clientes utilizando el formulario de la izquierda</p>
+                    </div>
+                    
+                    <table class="clients-table" id="clientsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                                <th>Cuenta</th>
+                                <th>Dirección</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody">
+                            <!-- Las filas se agregarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="panel-title" style="margin-top: 30px;">
+                    <i class="fas fa-info-circle"></i> Formato de Ejemplo
+                </div>
+                
+                <div class="instructions">
+                    <p>Ejemplo del formato que debe pegarse:</p>
+                    <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin-top: 10px; font-size: 0.85rem; overflow-x: auto; max-height: 300px; overflow-y: auto;">
+                        <pre style="margin: 0; white-space: pre-wrap;">
+25 diciembre 2025
+
+0142245355
+
+Susana Chapa Guerrero
+
+5 abril 1957
+
+8120702993
+
+
+chicanahd20@gmail.com
+
+Industrias del oriente 3622
+Entre calle nueva y palma
+Jardines de san Rafael
+Guadalupe
+Nuevo León
+CP 67110
+
+https://maps.app.goo.gl/CkjqTJqemy36fxG8A?g_st=ac
+
+*Plan Requerido*
+250 megas TV $749
+* Precio promoción al pagar puntual $699
+
+*Adicionales*
+* Servicio de tv adicional  $99/mes
+* $60 de descuento mensual por 5 meses
+
+Mensual $798
+Mensual con descuento aplicado $738/mes por 5 meses
+
+*Paga al instalar $738*</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Sistema de Gestión de Clientes &copy; 2025 | Los datos se almacenan localmente en tu navegador</p>
+        </footer>
+    </div>
+
+    <script>
+        // Array para almacenar los clientes
+        let clients = JSON.parse(localStorage.getItem('clients')) || [];
+        
+        // Referencias a elementos del DOM
+        const rawDataTextarea = document.getElementById('rawData');
+        const pasteTrigger = document.getElementById('pasteTrigger');
+        const processBtn = document.getElementById('processBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loadExampleBtn = document.getElementById('loadExampleBtn');
+        const addClientBtn = document.getElementById('addClientBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const clientCount = document.getElementById('clientCount');
+        const emptyState = document.getElementById('emptyState');
+        const clientsTable = document.getElementById('clientsTable');
+        const clientsTableBody = document.getElementById('clientsTableBody');
+        const dataError = document.getElementById('dataError');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Campos del formulario
+        const formFields = {
+            fechaInstalada: document.getElementById('fechaInstalada'),
+            numeroCuenta: document.getElementById('numeroCuenta'),
+            nombreCliente: document.getElementById('nombreCliente'),
+            fechaNacimiento: document.getElementById('fechaNacimiento'),
+            telefonoTitular: document.getElementById('telefonoTitular'),
+            telefonoAdicional: document.getElementById('telefonoAdicional'),
+            correoCliente: document.getElementById('correoCliente'),
+            calleNumero: document.getElementById('calleNumero'),
+            entreCalles: document.getElementById('entreCalles'),
+            colonia: document.getElementById('colonia'),
+            municipio: document.getElementById('municipio'),
+            estado: document.getElementById('estado'),
+            codigoPostal: document.getElementById('codigoPostal'),
+            linkMaps: document.getElementById('linkMaps'),
+            informacionAdicional: document.getElementById('informacionAdicional')
+        };
+        
+        // Inicializar la interfaz
+        document.addEventListener('DOMContentLoaded', function() {
+            updateClientList();
+            
+            // Configurar el área de pegado
+            pasteTrigger.addEventListener('click', function() {
+                rawDataTextarea.focus();
+                rawDataTextarea.select();
+            });
+            
+            rawDataTextarea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                pasteTrigger.style.borderColor = '#6a11cb';
+                pasteTrigger.style.backgroundColor = '#f0f5ff';
+            });
+            
+            rawDataTextarea.addEventListener('dragleave', function() {
+                pasteTrigger.style.borderColor = '#bbb';
+                pasteTrigger.style.backgroundColor = '#f9f9f9';
+            });
+            
+            rawDataTextarea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                pasteTrigger.style.borderColor = '#bbb';
+                pasteTrigger.style.backgroundColor = '#f9f9f9';
+                
+                const text = e.dataTransfer.getData('text');
+                rawDataTextarea.value = text;
+                processData();
+            });
+            
+            // Botón para procesar datos
+            processBtn.addEventListener('click', processData);
+            
+            // Botón para limpiar campos
+            clearBtn.addEventListener('click', function() {
+                rawDataTextarea.value = '';
+                for (let field in formFields) {
+                    if (formFields[field]) {
+                        formFields[field].value = '';
+                    }
+                }
+                hideError();
+                showSuccess('Campos limpiados');
+            });
+            
+            // Botón para cargar ejemplo
+            loadExampleBtn.addEventListener('click', loadExampleData);
+            
+            // Botón para agregar cliente
+            addClientBtn.addEventListener('click', addClient);
+            
+            // Botón para exportar a Excel
+            exportBtn.addEventListener('click', exportToExcel);
+            
+            // Tabs functionality
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remover clase active de todos los botones
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Remover clase active de todos los contenidos
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Activar el botón clickeado
+                    this.classList.add('active');
+                    
+                    // Mostrar el contenido correspondiente
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Permitir pegado con Ctrl+V en toda la página
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'v') {
+                    setTimeout(() => {
+                        if (document.activeElement === rawDataTextarea) {
+                            // Si ya está en el textarea, no hacer nada
+                            return;
+                        }
+                        // Enfocar el textarea para pegar
+                        rawDataTextarea.focus();
+                    }, 10);
+                }
+                
+                // Procesar con Ctrl+Enter
+                if (e.ctrlKey && e.key === 'Enter') {
+                    processData();
+                }
+            });
+            
+            // Cargar datos de ejemplo al hacer doble clic en el área de pegado
+            pasteTrigger.addEventListener('dblclick', loadExampleData);
+        });
+        
+        // Función para procesar los datos pegados
+        function processData() {
+            const rawData = rawDataTextarea.value.trim();
+            
+            if (!rawData) {
+                showError('Por favor, pega la información del cliente');
+                return;
+            }
+            
+            // Dividir el texto en líneas
+            const lines = rawData.split('\n').map(line => line.trim());
+            
+            // Extraer información
+            let extractedData = extractDataFromLines(lines);
+            
+            // Validar que se extrajo información suficiente
+            if (!extractedData.nombreCliente || !extractedData.telefonoTitular) {
+                showError('No se pudo extraer información suficiente. Verifica el formato.');
+                return;
+            }
+            
+            // Llenar los campos del formulario
+            for (let field in extractedData) {
+                if (formFields[field]) {
+                    formFields[field].value = extractedData[field] || '';
+                }
+            }
+            
+            // Cambiar a la pestaña de campos
+            document.querySelector('[data-tab="fields-tab"]').click();
+            
+            // Marcar como éxito
+            hideError();
+            showSuccess('Datos procesados correctamente');
+        }
+        
+        // Función para extraer datos de las líneas de texto
+        function extractDataFromLines(lines) {
+            let extractedData = {};
+            
+            // Patrones para extraer datos
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Extraer fecha instalada (primera fecha encontrada)
+                if (!extractedData.fechaInstalada && /^\d{1,2}\s+[a-zA-Z]+\s+\d{4}$/.test(line)) {
+                    extractedData.fechaInstalada = line;
+                    continue;
+                }
+                
+                // Extraer número de cuenta (10 dígitos)
+                if (!extractedData.numeroCuenta && /^\d{10}$/.test(line)) {
+                    extractedData.numeroCuenta = line;
+                    continue;
+                }
+                
+                // Extraer nombre (tres palabras con mayúscula inicial)
+                if (!extractedData.nombreCliente && /^[A-Z][a-z]+\s+[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(line)) {
+                    extractedData.nombreCliente = line;
+                    continue;
+                }
+                
+                // Extraer fecha nacimiento (segunda fecha encontrada)
+                if (extractedData.fechaInstalada && !extractedData.fechaNacimiento && /^\d{1,2}\s+[a-zA-Z]+\s+\d{4}$/.test(line)) {
+                    extractedData.fechaNacimiento = line;
+                    continue;
+                }
+                
+                // Extraer teléfono titular (primer teléfono de 10 dígitos)
+                if (!extractedData.telefonoTitular && /^\d{10}$/.test(line)) {
+                    extractedData.telefonoTitular = line;
+                    continue;
+                }
+                
+                // Extraer teléfono adicional (segundo teléfono de 10 dígitos)
+                if (extractedData.telefonoTitular && !extractedData.telefonoAdicional && /^\d{10}$/.test(line)) {
+                    extractedData.telefonoAdicional = line;
+                    continue;
+                }
+                
+                // Extraer correo
+                if (!extractedData.correoCliente && line.includes('@') && line.includes('.')) {
+                    extractedData.correoCliente = line;
+                    continue;
+                }
+                
+                // Extraer dirección - asumimos que después del correo viene la dirección
+                if (extractedData.correoCliente && !extractedData.calleNumero && 
+                    line.length > 0 && !line.includes('http') && !line.includes('maps') && 
+                    !line.includes('*Plan') && !line.includes('*Adicionales') && 
+                    !line.includes('Mensual $') && !line.includes('Paga al instalar')) {
+                    
+                    // Intentar extraer dirección completa
+                    let addressLines = [];
+                    let j = i;
+                    
+                    while (j < lines.length && 
+                           !lines[j].includes('http') && 
+                           !lines[j].includes('maps') && 
+                           !lines[j].includes('*Plan') && 
+                           !lines[j].includes('*Adicionales') &&
+                           lines[j].length > 0) {
+                        
+                        addressLines.push(lines[j]);
+                        j++;
+                    }
+                    
+                    // Procesar líneas de dirección
+                    if (addressLines.length >= 1) {
+                        extractedData.calleNumero = addressLines[0];
+                        
+                        if (addressLines.length >= 2 && addressLines[1].toLowerCase().includes('entre')) {
+                            extractedData.entreCalles = addressLines[1];
+                            
+                            // El resto de la dirección
+                            if (addressLines.length >= 6) {
+                                extractedData.colonia = addressLines[2] || '';
+                                extractedData.municipio = addressLines[3] || '';
+                                extractedData.estado = addressLines[4] || '';
+                                extractedData.codigoPostal = addressLines[5] || '';
+                            }
+                        } else if (addressLines.length >= 5) {
+                            // Sin línea "entre calles"
+                            extractedData.colonia = addressLines[1] || '';
+                            extractedData.municipio = addressLines[2] || '';
+                            extractedData.estado = addressLines[3] || '';
+                            extractedData.codigoPostal = addressLines[4] || '';
+                        }
+                    }
+                    
+                    i = j - 1; // Ajustar índice
+                    continue;
+                }
+                
+                // Extraer enlace de Google Maps
+                if (!extractedData.linkMaps && (line.includes('http') && (line.includes('maps') || line.includes('goo.gl')))) {
+                    extractedData.linkMaps = line;
+                    continue;
+                }
+                
+                // Extraer información adicional (plan, precios, etc.)
+                if (line.includes('*Plan Requerido*') || line.includes('*Adicionales*') || 
+                    line.includes('Mensual $') || line.includes('Paga al instalar')) {
+                    
+                    let additionalInfo = [];
+                    let k = i;
+                    
+                    while (k < lines.length) {
+                        additionalInfo.push(lines[k]);
+                        k++;
+                    }
+                    
+                    extractedData.informacionAdicional = additionalInfo.join('\n');
+                    break; // Salir del loop principal
+                }
+            }
+            
+            return extractedData;
+        }
+        
+        // Función para agregar un cliente
+        function addClient() {
+            // Obtener los valores de los campos
+            const cliente = {
+                id: Date.now(),
+                fechaInstalada: formFields.fechaInstalada.value,
+                numeroCuenta: formFields.numeroCuenta.value,
+                nombreCliente: formFields.nombreCliente.value,
+                fechaNacimiento: formFields.fechaNacimiento.value,
+                telefonoTitular: formFields.telefonoTitular.value,
+                telefonoAdicional: formFields.telefonoAdicional.value,
+                correoCliente: formFields.correoCliente.value,
+                calleNumero: formFields.calleNumero.value,
+                entreCalles: formFields.entreCalles.value,
+                colonia: formFields.colonia.value,
+                municipio: formFields.municipio.value,
+                estado: formFields.estado.value,
+                codigoPostal: formFields.codigoPostal.value,
+                linkMaps: formFields.linkMaps.value,
+                informacionAdicional: formFields.informacionAdicional.value,
+                fechaRegistro: new Date().toLocaleString('es-MX')
+            };
+            
+            // Validar campos obligatorios
+            if (!cliente.nombreCliente || !cliente.telefonoTitular || !cliente.numeroCuenta) {
+                showError('Por favor, completa al menos el nombre, teléfono y número de cuenta');
+                return;
+            }
+            
+            // Extraer información del plan
+            const planInfo = extractPlanInfo(cliente.informacionAdicional);
+            cliente.plan = planInfo.plan;
+            cliente.mensualidad = planInfo.mensualidad;
+            cliente.pagoInstalacion = planInfo.pagoInstalacion;
+            
+            // Agregar a la lista
+            clients.push(cliente);
+            
+            // Guardar en localStorage
+            localStorage.setItem('clients', JSON.stringify(clients));
+            
+            // Actualizar la lista
+            updateClientList();
+            
+            // Limpiar formulario y volver a la pestaña de pegado
+            rawDataTextarea.value = '';
+            for (let field in formFields) {
+                formFields[field].value = '';
+            }
+            
+            document.querySelector('[data-tab="paste-tab"]').click();
+            
+            // Mostrar confirmación
+            showSuccess(`Cliente "${cliente.nombreCliente}" agregado correctamente`);
+        }
+        
+        // Función para extraer información del plan
+        function extractPlanInfo(infoText) {
+            const planInfo = {
+                plan: 'No especificado',
+                mensualidad: 'No especificado',
+                pagoInstalacion: 'No especificado'
+            };
+            
+            if (!infoText) return planInfo;
+            
+            const lines = infoText.split('\n');
+            
+            for (let line of lines) {
+                if (line.includes('megas') || (line.includes('Plan') && !line.includes('*Plan Requerido*'))) {
+                    planInfo.plan = line.replace('*Plan Requerido*', '').trim();
+                }
+                
+                if (line.includes('Mensual $')) {
+                    planInfo.mensualidad = line.replace('Mensual', '').trim();
+                }
+                
+                if (line.includes('Paga al instalar')) {
+                    planInfo.pagoInstalacion = line.replace('*Paga al instalar', '').replace('*', '').trim();
+                }
+            }
+            
+            return planInfo;
+        }
+        
+        // Función para actualizar la lista de clientes
+        function updateClientList() {
+            clientCount.textContent = clients.length;
+            
+            if (clients.length === 0) {
+                emptyState.style.display = 'block';
+                clientsTable.style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            clientsTable.style.display = 'table';
+            
+            // Limpiar tabla
+            clientsTableBody.innerHTML = '';
+            
+            // Agregar cada cliente a la tabla
+            clients.forEach((cliente, index) => {
+                const row = document.createElement('tr');
+                
+                // Nombre y correo
+                const nameCell = document.createElement('td');
+                nameCell.innerHTML = `<strong>${cliente.nombreCliente}</strong><br><small>${cliente.correoCliente || 'Sin correo'}</small>`;
+                
+                // Teléfono
+                const phoneCell = document.createElement('td');
+                phoneCell.textContent = cliente.telefonoTitular;
+                if (cliente.telefonoAdicional) {
+                    phoneCell.innerHTML += `<br><small>${cliente.telefonoAdicional}</small>`;
+                }
+                
+                // Cuenta
+                const accountCell = document.createElement('td');
+                accountCell.textContent = cliente.numeroCuenta;
+                
+                // Dirección
+                const addressCell = document.createElement('td');
+                addressCell.innerHTML = `<small>${cliente.calleNumero || ''}<br>${cliente.colonia || ''}</small>`;
+                
+                // Acciones
+                const actionsCell = document.createElement('td');
+                actionsCell.innerHTML = `
+                    <button onclick="viewClient(${index})" class="btn" style="padding: 5px 10px; margin: 2px; font-size: 0.8rem; background-color: #3498db;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="deleteClient(${index})" class="btn" style="padding: 5px 10px; margin: 2px; font-size: 0.8rem; background-color: #e74c3c;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                
+                row.appendChild(nameCell);
+                row.appendChild(phoneCell);
+                row.appendChild(accountCell);
+                row.appendChild(addressCell);
+                row.appendChild(actionsCell);
+                
+                clientsTableBody.appendChild(row);
+            });
+        }
+        
+        // Función para ver detalles de un cliente
+        function viewClient(index) {
+            const cliente = clients[index];
+            
+            let detalles = `
+                <strong>Nombre:</strong> ${cliente.nombreCliente}<br>
+                <strong>Cuenta:</strong> ${cliente.numeroCuenta}<br>
+                <strong>Teléfono titular:</strong> ${cliente.telefonoTitular}<br>
+                <strong>Teléfono adicional:</strong> ${cliente.telefonoAdicional || 'No especificado'}<br>
+                <strong>Correo:</strong> ${cliente.correoCliente || 'No especificado'}<br>
+                <strong>Fecha instalación:</strong> ${cliente.fechaInstalada || 'No especificado'}<br>
+                <strong>Fecha nacimiento:</strong> ${cliente.fechaNacimiento || 'No especificado'}<br><br>
+                
+                <strong>Dirección:</strong><br>
+                ${cliente.calleNumero || ''}<br>
+                ${cliente.entreCalles ? 'Entre: ' + cliente.entreCalles + '<br>' : ''}
+                ${cliente.colonia || ''}<br>
+                ${cliente.municipio || ''}, ${cliente.estado || ''}<br>
+                ${cliente.codigoPostal || ''}<br><br>
+            `;
+            
+            if (cliente.linkMaps) {
+                detalles += `<strong>Mapa:</strong> <a href="${cliente.linkMaps}" target="_blank">Ver ubicación</a><br><br>`;
+            }
+            
+            detalles += `<strong>Registrado el:</strong> ${cliente.fechaRegistro}<br><br>`;
+            
+            if (cliente.informacionAdicional) {
+                detalles += `<strong>Información adicional:</strong><br><div style="background:#f0f0f0; padding:10px; border-radius:5px; font-size:0.9rem; margin-top:5px;">${cliente.informacionAdicional.replace(/\n/g, '<br>')}</div>`;
+            }
+            
+            // Crear un modal simple
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                padding: 20px;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                padding: 25px;
+                border-radius: 10px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            `;
+            
+            modalContent.innerHTML = `
+                <h3 style="margin-top: 0; color: #2575fc; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                    <i class="fas fa-user"></i> Detalles del Cliente
+                </h3>
+                <div style="margin: 20px 0;">${detalles}</div>
+                <div style="text-align: right;">
+                    <button id="closeModalBtn" style="padding: 10px 20px; background-color: #6a11cb; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Cerrar
+                    </button>
+                </div>
+            `;
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Cerrar modal
+            document.getElementById('closeModalBtn').addEventListener('click', function() {
+                document.body.removeChild(modal);
+            });
+            
+            // Cerrar al hacer clic fuera del modal
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+        }
+        
+        // Función para eliminar un cliente
+        function deleteClient(index) {
+            if (confirm(`¿Estás seguro de eliminar a "${clients[index].nombreCliente}"?`)) {
+                clients.splice(index, 1);
+                localStorage.setItem('clients', JSON.stringify(clients));
+                updateClientList();
+                showSuccess('Cliente eliminado correctamente');
+            }
+        }
+        
+        // Función para exportar a Excel
+        function exportToExcel() {
+            if (clients.length === 0) {
+                showError('No hay clientes para exportar');
+                return;
+            }
+            
+            // Preparar datos para Excel
+            const wsData = [
+                ['Fecha Registro', 'Fecha Instalación', 'No. Cuenta', 'Nombre', 'Fecha Nacimiento', 
+                 'Teléfono Titular', 'Teléfono Adicional', 'Correo', 'Calle y Número', 'Entre Calles',
+                 'Colonia', 'Municipio', 'Estado', 'Código Postal', 'Link Maps', 'Plan', 'Mensualidad', 
+                 'Pago Instalación', 'Información Adicional']
+            ];
+            
+            clients.forEach(cliente => {
+                const planInfo = extractPlanInfo(cliente.informacionAdicional);
+                
+                wsData.push([
+                    cliente.fechaRegistro,
+                    cliente.fechaInstalada,
+                    cliente.numeroCuenta,
+                    cliente.nombreCliente,
+                    cliente.fechaNacimiento,
+                    cliente.telefonoTitular,
+                    cliente.telefonoAdicional || '',
+                    cliente.correoCliente || '',
+                    cliente.calleNumero || '',
+                    cliente.entreCalles || '',
+                    cliente.colonia || '',
+                    cliente.municipio || '',
+                    cliente.estado || '',
+                    cliente.codigoPostal || '',
+                    cliente.linkMaps || '',
+                    planInfo.plan,
+                    planInfo.mensualidad,
+                    planInfo.pagoInstalacion,
+                    cliente.informacionAdicional || ''
+                ]);
+            });
+            
+            // Crear hoja de trabajo
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // Ajustar anchos de columna
+            const wscols = [
+                {wch: 20}, {wch: 20}, {wch: 15}, {wch: 25}, {wch: 20},
+                {wch: 15}, {wch: 15}, {wch: 25}, {wch: 30}, {wch: 20},
+                {wch: 20}, {wch: 20}, {wch: 20}, {wch: 12}, {wch: 40},
+                {wch: 30}, {wch: 15}, {wch: 20}, {wch: 50}
+            ];
+            ws['!cols'] = wscols;
+            
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Clientes");
+            
+            // Generar archivo y descargar
+            const fecha = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `clientes_${fecha}.xlsx`);
+            
+            showSuccess(`Archivo exportado con ${clients.length} clientes`);
+        }
+        
+        // Función para cargar datos de ejemplo
+        function loadExampleData() {
+            const exampleData = `25 diciembre 2025
+
+0142245355
+
+Susana Chapa Guerrero
+
+5 abril 1957
+
+8120702993
+
+
+chicanahd20@gmail.com
+
+Industrias del oriente 3622
+Entre calle nueva y palma
+Jardines de san Rafael
+Guadalupe
+Nuevo León
+CP 67110
+
+https://maps.app.goo.gl/CkjqTJqemy36fxG8A?g_st=ac
+
+*Plan Requerido*
+250 megas TV $749
+* Precio promoción al pagar puntual $699
+
+*Adicionales*
+* Servicio de tv adicional  $99/mes
+* $60 de descuento mensual por 5 meses
+
+Mensual $798
+Mensual con descuento aplicado $738/mes por 5 meses
+
+*Paga al instalar $738*`;
+            
+            rawDataTextarea.value = exampleData;
+            showSuccess('Datos de ejemplo cargados. Haz clic en "Procesar Datos" para extraer la información.');
+        }
+        
+        // Funciones para mostrar/ocultar errores y mensajes
+        function showError(message) {
+            dataError.textContent = message;
+            dataError.style.display = 'block';
+            rawDataTextarea.classList.add('field-error');
+            
+            // Quitar el error después de 5 segundos
+            setTimeout(hideError, 5000);
+        }
+        
+        function hideError() {
+            dataError.style.display = 'none';
+            rawDataTextarea.classList.remove('field-error');
+        }
+        
+        function showSuccess(message) {
+            // Crear un elemento de notificación temporal
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #2ecc71;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+            `;
+            
+            notification.innerHTML = `<i class="fas fa-check-circle" style="margin-right: 10px;"></i> ${message}`;
+            document.body.appendChild(notification);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s';
+                setTimeout(() => document.body.removeChild(notification), 500);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
